@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NURBS Surface Visualizer</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <main class="app">
+      <aside class="panel" aria-label="Surface editor">
+        <header class="brand">
+          <div>
+            <h1>NURBS Surface</h1>
+            <p id="statusText" role="status">Ready</p>
+          </div>
+          <div class="file-actions">
+            <button id="downloadJson" type="button">Download JSON</button>
+            <button id="uploadJsonButton" type="button">Upload JSON</button>
+            <input id="uploadJson" type="file" accept="application/json,.json" hidden />
+          </div>
+        </header>
+
+        <section class="section">
+          <h2>Dimensions</h2>
+          <div class="field-grid two">
+            <label>
+              Degree U
+              <input id="degreeU" type="number" min="1" step="1" />
+            </label>
+            <label>
+              Degree V
+              <input id="degreeV" type="number" min="1" step="1" />
+            </label>
+            <label>
+              Points U
+              <input id="countU" type="number" min="2" step="1" />
+            </label>
+            <label>
+              Points V
+              <input id="countV" type="number" min="2" step="1" />
+            </label>
+          </div>
+          <button id="resetSurface" class="secondary" type="button">Reset Surface</button>
+        </section>
+
+        <section class="section">
+          <h2>Knot Vectors</h2>
+          <div class="field-stack">
+            <label>
+              U Knots
+              <textarea id="knotsU" spellcheck="false"></textarea>
+            </label>
+            <label>
+              V Knots
+              <textarea id="knotsV" spellcheck="false"></textarea>
+            </label>
+          </div>
+          <button id="uniformKnots" class="secondary" type="button">Uniform Knots</button>
+        </section>
+
+        <section id="controlPointSection" class="section">
+          <h2>Control Point</h2>
+          <p id="pointHint" class="point-hint">Selected P[1, 1]</p>
+          <div class="field-grid two compact">
+            <label>
+              U Index
+              <select id="pointU"></select>
+            </label>
+            <label>
+              V Index
+              <select id="pointV"></select>
+            </label>
+            <label>
+              X
+              <input id="pointX" type="number" step="0.1" />
+            </label>
+            <label>
+              Y
+              <input id="pointY" type="number" step="0.1" />
+            </label>
+            <label>
+              Z
+              <input id="pointZ" type="number" step="0.1" />
+            </label>
+            <label>
+              Weight
+              <input id="pointW" type="number" min="0.001" step="0.1" />
+            </label>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2>Control Points</h2>
+          <div class="field-grid jump-grid">
+            <label>
+              Jump U
+              <input id="jumpU" type="number" min="0" step="1" />
+            </label>
+            <label>
+              Jump V
+              <input id="jumpV" type="number" min="0" step="1" />
+            </label>
+            <button id="jumpPoint" class="secondary" type="button">Jump</button>
+          </div>
+          <div id="controlPointList" class="control-point-list" aria-label="All control points"></div>
+        </section>
+
+        <section class="section">
+          <h2>Evaluation</h2>
+          <div class="slider-row">
+            <label for="sliderU">U</label>
+            <input id="sliderU" type="range" min="0" max="1000" value="420" />
+            <input id="valueU" class="uv-input" type="number" step="0.001" value="0.420" />
+          </div>
+          <div class="slider-row">
+            <label for="sliderV">V</label>
+            <input id="sliderV" type="range" min="0" max="1000" value="570" />
+            <input id="valueV" class="uv-input" type="number" step="0.001" value="0.570" />
+          </div>
+          <dl class="point-readout">
+            <div>
+              <dt>X</dt>
+              <dd id="evalX">0.000</dd>
+            </div>
+            <div>
+              <dt>Y</dt>
+              <dd id="evalY">0.000</dd>
+            </div>
+            <div>
+              <dt>Z</dt>
+              <dd id="evalZ">0.000</dd>
+            </div>
+          </dl>
+        </section>
+      </aside>
+
+      <section class="viewport" aria-label="3D viewport">
+        <div id="scene"></div>
+      </section>
+    </main>
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>

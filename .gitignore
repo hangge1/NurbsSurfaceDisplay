@@ -1,7 +1,6 @@
 .agents/
 _bmad/config.user.toml
 _bmad/custom/*.user.toml
-_bmad-output/test-artifacts/
 node_modules/
 dist/
 build/

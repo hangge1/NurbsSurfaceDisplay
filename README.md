@@ -1,6 +1,6 @@
 # NurbsSurfaceDisplay
 
-A browser-based NURBS surface visualizer.
+An interactive browser-based NURBS surface visualizer that can import and export surface definitions.
 
 ## Features
 

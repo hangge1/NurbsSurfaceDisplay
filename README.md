@@ -143,3 +143,8 @@ docs/           截图和文档资源
 - V 方向有效参数域为 `[knotsV[degreeV], knotsV[countV]]`，并且必须满足 `knotsV[degreeV] < knotsV[countV]`。
 
 导入 JSON 或编辑表单时，如果数据不满足这些约束，页面会通过状态栏和弹框提示具体错误。
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+Unless otherwise noted, third-party dependencies, assets, course/tutorial materials, and externally sourced resources remain under their original licenses.

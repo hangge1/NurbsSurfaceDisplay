@@ -1,29 +1,47 @@
 # NurbsSurfaceDisplay
 
-An interactive browser-based NURBS surface visualizer that can import and export surface definitions.
+NurbsSurfaceDisplay 是一个基于浏览器的交互式 NURBS 曲面可视化工具。它支持编辑 NURBS 曲面定义，在 Three.js 三维视口中查看曲面结果，直接拖拽控制点，并将曲面数据导入或导出为 JSON。
 
-## Features
+## 效果预览
 
-- Edit NURBS surface degrees, knot vectors, control points, and weights.
-- Inspect evaluated 3D points by entering or sliding U/V parameters.
-- Interactively select and move control points in the 3D viewport.
-- Import and export surface definitions as JSON.
+![NURBS 曲面可视化工具](docs/screenshot.png)
 
-## Run
+## 当前功能支持
 
-Use any static file server from the project root:
+- 三维 NURBS 曲面渲染，包含实体曲面、线框叠加、控制网格和控制点标记。
+- 支持编辑 U/V 两个方向的曲面阶数。
+- 支持编辑 U/V 两个方向的控制点数量。
+- 支持编辑 U/V 节点向量。
+- 节点向量校验：长度、数值有效性、非递减顺序和有效参数域。
+- 一键生成开放均匀节点向量。
+- 支持编辑控制点的 `x`、`y`、`z` 坐标和有理权重 `w`。
+- 支持通过三维视口、下拉选择器、跳转输入框或完整控制点列表选择控制点。
+- 支持使用三维变换控件拖拽选中的控制点，并实时更新曲面。
+- 三维视口和控制点列表之间支持悬停与选中高亮联动。
+- 支持通过滑块或数值输入设置 U/V 参数并计算曲面点。
+- 显示求值点的 `x`、`y`、`z` 坐标，并在曲面上用红色标记显示该点。
+- 支持重置为默认示例曲面。
+- 支持 JSON 导入，并对导入数据进行结构归一化和校验。
+- 支持导出当前有效的曲面定义为 JSON。
+- 支持桌面端和较小屏幕的响应式布局。
+
+## 运行方式
+
+在项目根目录使用任意静态文件服务器启动，例如：
 
 ```powershell
 python -m http.server 4173
 ```
 
-Then open:
+然后在浏览器中打开：
 
 ```text
 http://localhost:4173
 ```
 
-## JSON Format
+页面会从 jsDelivr 加载 Three.js 模块，因此默认需要网络访问。如果希望离线运行，需要将相关依赖本地化。
+
+## JSON 数据格式
 
 ```json
 {
@@ -33,8 +51,15 @@ http://localhost:4173
   "knotsV": [0, 0, 0, 0, 1, 1, 1, 1],
   "controlPoints": [
     [
-      { "x": -2, "y": -2, "z": 0, "w": 1 }
+      { "x": -2, "y": -2, "z": 0, "w": 1 },
+      { "x": -2, "y": -0.667, "z": 0, "w": 1 }
+    ],
+    [
+      { "x": -0.667, "y": -2, "z": 0, "w": 1 },
+      { "x": -0.667, "y": -0.667, "z": 0.9, "w": 1.6 }
     ]
   ]
 }
 ```
+
+`controlPoints` 必须是矩形二维数组。每个控制点都需要包含有限数值类型的 `x`、`y`、`z`，以及大于 0 的 `w`。

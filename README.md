@@ -6,6 +6,12 @@ NurbsSurfaceDisplay 是一个基于浏览器的交互式 NURBS 曲面可视化�
 
 ![NURBS 曲面可视化工具](docs/screenshot.png)
 
+## 适用场景
+
+- 学习 NURBS 曲面的阶数、节点向量、控制点和权重如何影响曲面形态。
+- 快速验证一组 NURBS 曲面 JSON 数据是否结构正确、参数合理。
+- 在浏览器中交互式调整控制点，并导出可复用的曲面定义。
+
 ## 当前功能支持
 
 - 三维 NURBS 曲面渲染，包含实体曲面、线框叠加、控制网格和控制点标记。
@@ -25,6 +31,13 @@ NurbsSurfaceDisplay 是一个基于浏览器的交互式 NURBS 曲面可视化�
 - 支持导出当前有效的曲面定义为 JSON。
 - 支持桌面端和较小屏幕的响应式布局。
 
+## 技术栈
+
+- JavaScript
+- Three.js
+- HTML / CSS
+- 浏览器原生 File API
+
 ## 运行方式
 
 在项目根目录使用任意静态文件服务器启动，例如：
@@ -40,6 +53,15 @@ http://localhost:4173
 ```
 
 页面会从 jsDelivr 加载 Three.js 模块，因此默认需要网络访问。如果希望离线运行，需要将相关依赖本地化。
+
+## 项目结构
+
+```text
+index.html      页面结构
+styles.css      页面样式
+src/app.js      NURBS 数据、渲染、交互和导入导出逻辑
+docs/           截图和文档资源
+```
 
 ## JSON 数据格式模板
 

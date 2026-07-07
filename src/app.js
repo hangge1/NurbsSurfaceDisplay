@@ -82,6 +82,7 @@ let isDraggingControlPoint = false;
 let controlPointMeshes = new Map();
 let model = createDefaultModel();
 let lastValidModel = cloneModel(model);
+let lastAlertedDataError = "";
 
 syncFormFromModel(model);
 renderFromInputs();
@@ -309,8 +310,9 @@ function renderFromInputs(successMessage = "Ready") {
     drawModel(model);
     syncControlPointList();
     setStatus(successMessage);
+    lastAlertedDataError = "";
   } catch (error) {
-    setStatus(error.message, true);
+    reportDataError(error.message);
     updateEvaluation(null);
   }
 }
@@ -332,38 +334,41 @@ function readModelFromForm() {
 
 function validateModel(candidate) {
   if (!Number.isInteger(candidate.degreeU) || candidate.degreeU < 1) {
-    throw new Error("Degree U must be a positive integer");
+    throw new Error("Degree U 必须是正整数");
   }
   if (!Number.isInteger(candidate.degreeV) || candidate.degreeV < 1) {
-    throw new Error("Degree V must be a positive integer");
+    throw new Error("Degree V 必须是正整数");
   }
   if (!Array.isArray(candidate.controlPoints) || candidate.controlPoints.length < 2) {
-    throw new Error("Control grid needs at least 2 U rows");
+    throw new Error("控制点网格至少需要 2 行 U 方向控制点");
   }
   if (!Array.isArray(candidate.controlPoints[0]) || candidate.controlPoints[0].length < 2) {
-    throw new Error("Control grid needs at least 2 V columns");
+    throw new Error("控制点网格至少需要 2 列 V 方向控制点");
   }
 
   const countU = candidate.controlPoints.length;
   const countV = candidate.controlPoints[0].length;
   if (candidate.degreeU >= countU) {
-    throw new Error("Degree U must be lower than point count U");
+    throw new Error("Degree U 必须小于 U 方向控制点数量");
   }
   if (candidate.degreeV >= countV) {
-    throw new Error("Degree V must be lower than point count V");
+    throw new Error("Degree V 必须小于 V 方向控制点数量");
   }
 
   for (let i = 0; i < countU; i += 1) {
     if (!Array.isArray(candidate.controlPoints[i]) || candidate.controlPoints[i].length !== countV) {
-      throw new Error("Control point grid must be rectangular");
+      throw new Error("控制点网格必须是矩形二维数组");
     }
     for (let j = 0; j < countV; j += 1) {
       const point = candidate.controlPoints[i][j];
+      if (!point || typeof point !== "object") {
+        throw new Error(`控制点 [${i}, ${j}] 必须是 [x, y, z, w] 数组`);
+      }
       if (![point.x, point.y, point.z, point.w].every(Number.isFinite)) {
-        throw new Error(`Control point [${i}, ${j}] must contain finite x, y, z, w`);
+        throw new Error(`控制点 [${i}, ${j}] 必须包含有效数值 x、y、z、w`);
       }
       if (point.w <= 0) {
-        throw new Error(`Control point [${i}, ${j}] weight must be greater than 0`);
+        throw new Error(`控制点 [${i}, ${j}] 的权重 w 必须大于 0`);
       }
     }
   }
@@ -375,18 +380,18 @@ function validateModel(candidate) {
 function validateKnots(knots, count, degree, axis) {
   const expectedLength = count + degree + 1;
   if (knots.length !== expectedLength) {
-    throw new Error(`${axis} knots need ${expectedLength} values`);
+    throw new Error(`${axis} 方向节点向量需要 ${expectedLength} 个值`);
   }
   for (let i = 0; i < knots.length; i += 1) {
     if (!Number.isFinite(knots[i])) {
-      throw new Error(`${axis} knots contain a non-numeric value`);
+      throw new Error(`${axis} 方向节点向量包含非数值内容`);
     }
     if (i > 0 && knots[i] < knots[i - 1]) {
-      throw new Error(`${axis} knots must be nondecreasing`);
+      throw new Error(`${axis} 方向节点向量必须按非递减顺序排列`);
     }
   }
   if (knots[degree] >= knots[count]) {
-    throw new Error(`${axis} knot domain must have positive length`);
+    throw new Error(`${axis} 方向节点参数域必须有正长度`);
   }
 }
 
@@ -398,10 +403,10 @@ function parseKnots(text, label) {
     .map((part) => Number(part));
 
   if (!values.length) {
-    throw new Error(`${label} cannot be empty`);
+    throw new Error(`${label} 不能为空`);
   }
   if (values.some((value) => !Number.isFinite(value))) {
-    throw new Error(`${label} contains invalid numbers`);
+    throw new Error(`${label} 包含无效数值`);
   }
   return values;
 }
@@ -570,7 +575,7 @@ function commitEvaluationInput(axis) {
 
   if (!Number.isFinite(value)) {
     updateEvaluation(lastValidModel);
-    setStatus(`${axis.toUpperCase()} must be a number`, true);
+    reportDataError(`${axis.toUpperCase()} 参数必须是数值`);
     return;
   }
 
@@ -849,7 +854,7 @@ function pickControlPoint(event) {
 }
 
 function downloadModel() {
-  const blob = new Blob([`${JSON.stringify(lastValidModel, null, 2)}\n`], {
+  const blob = new Blob([`${JSON.stringify(serializeModelForJson(lastValidModel), null, 2)}\n`], {
     type: "application/json",
   });
   const url = URL.createObjectURL(blob);
@@ -877,18 +882,19 @@ async function uploadModel(event) {
     syncFormFromModel(model);
     drawModel(model);
     setStatus("JSON loaded");
+    lastAlertedDataError = "";
   } catch (error) {
-    setStatus(`Upload failed: ${error.message}`, true);
+    reportDataError(`JSON 导入失败：${error.message}`);
   }
 }
 
 function normalizeImportedModel(value) {
   if (!value || typeof value !== "object") {
-    throw new Error("JSON root must be an object");
+    throw new Error("JSON 根节点必须是对象");
   }
   const controlPoints = value.controlPoints;
   if (!Array.isArray(controlPoints)) {
-    throw new Error("JSON must include controlPoints");
+    throw new Error("JSON 必须包含 controlPoints");
   }
 
   return {
@@ -896,15 +902,48 @@ function normalizeImportedModel(value) {
     degreeV: Number(value.degreeV),
     knotsU: Array.isArray(value.knotsU) ? value.knotsU.map(Number) : [],
     knotsV: Array.isArray(value.knotsV) ? value.knotsV.map(Number) : [],
-    controlPoints: controlPoints.map((row) => {
+    controlPoints: controlPoints.map((row, rowIndex) => {
       if (!Array.isArray(row)) return row;
-      return row.map((point) => ({
-        x: Number(point?.x),
-        y: Number(point?.y),
-        z: Number(point?.z),
-        w: Number(point?.w),
-      }));
+      return row.map((point, columnIndex) => normalizeControlPoint(point, rowIndex, columnIndex));
     }),
+  };
+}
+
+function normalizeControlPoint(point, rowIndex, columnIndex) {
+  if (Array.isArray(point)) {
+    if (point.length !== 4) {
+      throw new Error(`控制点 [${rowIndex}, ${columnIndex}] 必须是 [x, y, z, w] 四元数组`);
+    }
+    return {
+      x: Number(point[0]),
+      y: Number(point[1]),
+      z: Number(point[2]),
+      w: Number(point[3]),
+    };
+  }
+
+  // Backward compatible with older exported files that used object keys.
+  if (point && typeof point === "object") {
+    return {
+      x: Number(point.x),
+      y: Number(point.y),
+      z: Number(point.z),
+      w: Number(point.w),
+    };
+  }
+
+  throw new Error(`控制点 [${rowIndex}, ${columnIndex}] 必须是 [x, y, z, w] 数组`);
+}
+
+function serializeModelForJson(value) {
+  return {
+    degreeU: value.degreeU,
+    degreeV: value.degreeV,
+    knotsU: value.knotsU,
+    knotsV: value.knotsV,
+    controlPoints: value.controlPoints.map((row) =>
+      row.map((point) => [point.x, point.y, point.z, point.w]),
+    ),
   };
 }
 
@@ -957,6 +996,16 @@ function clamp(value, min, max) {
 function setStatus(message, isError = false) {
   els.statusText.textContent = message;
   els.statusText.classList.toggle("error", isError);
+  if (!isError) {
+    lastAlertedDataError = "";
+  }
+}
+
+function reportDataError(message) {
+  setStatus(message, true);
+  if (message === lastAlertedDataError) return;
+  lastAlertedDataError = message;
+  window.alert(message);
 }
 
 function resizeRenderer() {
